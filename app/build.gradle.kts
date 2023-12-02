@@ -56,7 +56,10 @@ project.extra.set("assetDir", project.projectDir.resolve("src/main/assets").toSt
 dependencies {
     val cameraXVersion = "1.2.3"
 
-    implementation ("com.google.mediapipe:tasks-vision:0.10.0")
+    implementation("org.jetbrains.kotlinx:multik-core:0.2.2")
+    implementation("org.jetbrains.kotlinx:multik-core-jvm:0.2.2")
+    implementation("com.google.mediapipe:tasks-vision:0.10.0")
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
     implementation("androidx.camera:camera-camera2:$cameraXVersion")
     implementation("androidx.camera:camera-lifecycle:$cameraXVersion")
     implementation("androidx.camera:camera-view:$cameraXVersion")

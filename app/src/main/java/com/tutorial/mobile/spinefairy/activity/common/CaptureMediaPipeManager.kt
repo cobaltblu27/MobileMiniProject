@@ -1,8 +1,10 @@
-package com.tutorial.mobile.spinefairy.capture
+package com.tutorial.mobile.spinefairy.activity.common
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Matrix
+import android.os.Parcel
+import android.os.Parcelable
 import android.os.SystemClock
 import android.util.Log
 import androidx.camera.core.ImageProxy
@@ -13,13 +15,15 @@ import com.google.mediapipe.tasks.core.Delegate
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarkerResult
+import com.tutorial.mobile.spinefairy.activity.capture.CaptureActivity
 import com.tutorial.mobile.spinefairy.model.PoseMarkerResultBundle
 
 class CaptureMediaPipeManager(
     private val context: Context,
-    private val onCaptureResult: (res: PoseMarkerResultBundle) -> Unit
 ) {
     private var poseLandmarker: PoseLandmarker? = null
+    val onCaptureResult: MutableList<(res: PoseMarkerResultBundle) -> Unit> =
+        mutableListOf()
 
     companion object {
         private const val TAG = "capture-mediapipe-manager"
@@ -28,6 +32,8 @@ class CaptureMediaPipeManager(
         private const val MIN_POSE_DETECTION_CONFIDENCE = 0.8f
         private const val MIN_POSE_TRACKING_CONFIDENCE = 0.8f
         private const val MIN_POSE_PRESENCE_CONFIDENCE = 0.5f
+
+        const val INTENT_NAME = "capture_mediapipe_manager"
     }
 
     init {
@@ -36,10 +42,12 @@ class CaptureMediaPipeManager(
 
 
     private fun setup() {
+        Log.i("PIPE_MANAGER", "starting setup")
         val baseOptions = BaseOptions.builder()
             .setModelAssetPath(MODEL_PATH)
             .setDelegate(Delegate.GPU)
             .build()
+        Log.i("PIPE_MANAGER", "options")
         val options = PoseLandmarker.PoseLandmarkerOptions.builder()
             .setBaseOptions(baseOptions)
             .setRunningMode(RunningMode.LIVE_STREAM)
@@ -51,22 +59,21 @@ class CaptureMediaPipeManager(
             .setMinTrackingConfidence(MIN_POSE_TRACKING_CONFIDENCE)
             .setMinPosePresenceConfidence(MIN_POSE_PRESENCE_CONFIDENCE)
             .build()
-
+        Log.i("PIPE_MANAGER", "createFromOptions")
         try {
             poseLandmarker = PoseLandmarker.createFromOptions(context, options)
+            Log.i("PIPE_MANAGER", "complete")
         } catch (e: Exception) {
             Log.e(CaptureActivity.TAG, e.message ?: "Error while creating poseLandmarker!")
         }
 
     }
 
-    // Convert the ImageProxy to MP Image and feed it to PoselandmakerHelper.
     fun detectLiveStream(
         imageProxy: ImageProxy,
     ) {
         val frameTime = SystemClock.uptimeMillis()
 
-        // Copy out RGB bits from the frame to a bitmap buffer
         val bitmapBuffer = Bitmap.createBitmap(
             imageProxy.width,
             imageProxy.height,
@@ -77,10 +84,8 @@ class CaptureMediaPipeManager(
         imageProxy.close()
 
         val matrix = Matrix().apply {
-            // Rotate the frame received from the camera to be in the same direction as it'll be shown
             postRotate(imageProxy.imageInfo.rotationDegrees.toFloat())
 
-            // flip image if user use front camera
             postScale(
                 -1f,
                 1f,
@@ -93,10 +98,8 @@ class CaptureMediaPipeManager(
             matrix, true
         )
 
-        // Convert the input Bitmap object to an MPImage object to run inference
         val mpImage = BitmapImageBuilder(rotatedBitmap).build()
 
-//        Log.i(TAG, poseLandmarker?.toString() ?: "null")
         poseLandmarker?.detectAsync(mpImage, frameTime)
     }
 
@@ -114,6 +117,6 @@ class CaptureMediaPipeManager(
             input.height,
             input.width
         )
-        onCaptureResult(resultBundle)
+        onCaptureResult.forEach { it(resultBundle) }
     }
 }

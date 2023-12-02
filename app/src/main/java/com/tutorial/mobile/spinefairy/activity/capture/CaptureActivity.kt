@@ -1,11 +1,11 @@
-package com.tutorial.mobile.spinefairy.capture
+package com.tutorial.mobile.spinefairy.activity.capture
 
 import android.Manifest
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.ImageButton
-import android.widget.TextView
-import androidx.activity.ComponentActivity
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
@@ -15,13 +15,20 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 import com.tutorial.mobile.spinefairy.R
+import com.tutorial.mobile.spinefairy.activity.common.CaptureMediaPipeManager
+import com.tutorial.mobile.spinefairy.activity.measure.MeasureFragment
 import com.tutorial.mobile.spinefairy.model.PoseMarkerResultBundle
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class CaptureActivity : ComponentActivity() {
+class CaptureActivity : FragmentActivity() {
     private lateinit var poseLandmarker: PoseLandmarker
 
     private lateinit var camera: Camera
@@ -32,12 +39,15 @@ class CaptureActivity : ComponentActivity() {
     private lateinit var cameraButton: ImageButton
     private lateinit var cameraPreview: PreviewView
     private lateinit var captureCanvasView: CaptureCanvasView
-    private lateinit var confidenceText: TextView
+    private lateinit var chart: LineChart
+
+    private var measureFragment: MeasureFragment? = null
 
     private lateinit var backgroundExecutor: ExecutorService
     private lateinit var captureMediaPipeManager: CaptureMediaPipeManager
 
-    private val resultList : MutableList<PoseMarkerResultBundle> = mutableListOf()
+    private val resultList: MutableList<PoseMarkerResultBundle> = mutableListOf()
+    private var captureStartTimestamp = System.currentTimeMillis()
 
     companion object {
         const val CAMERA_PERMISSION_CODE = 936
@@ -54,15 +64,19 @@ class CaptureActivity : ComponentActivity() {
             CAMERA_PERMISSION_CODE
         )
         setContentView(R.layout.activity_capture)
+//        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
         cameraPreview = findViewById(R.id.previewView)
         cameraPreview.post { startCamera() }
         captureCanvasView = findViewById(R.id.captureCanvasView)
-        confidenceText = findViewById(R.id.objectDetectionConfidenceTextView)
         backgroundExecutor = Executors.newSingleThreadExecutor()
+        chart = findViewById(R.id.chart)
+
+        chart.data = LineData()
 
         backgroundExecutor.execute {
-            captureMediaPipeManager = CaptureMediaPipeManager(this) {
+            captureMediaPipeManager = CaptureMediaPipeManager(this)
+            captureMediaPipeManager.onCaptureResult.add {
                 if (resultList.size > RESULT_LIST_SIZE) {
                     resultList.removeAt(0)
                 }
@@ -70,6 +84,26 @@ class CaptureActivity : ComponentActivity() {
                 captureCanvasView.setResults(resultList)
             }
         }
+
+        captureCanvasView.debugText = findViewById(R.id.captureInfoTextView)
+        captureCanvasView.onUpdateDistance.add {
+            updateChart(it.neckToNose)
+        }
+    }
+
+    private fun updateChart(distance: Float) {
+        val data = chart.data
+        data.getDataSetByIndex(0) ?: LineDataSet(null, "").apply {
+            color = Color.rgb(93, 18, 210)
+            setDrawCircles(false)
+            data.addDataSet(this)
+        }
+        val timestamp = System.currentTimeMillis() - captureStartTimestamp
+        data.addEntry(Entry(timestamp.toFloat(), distance), 0)
+        data.notifyDataChanged()
+        chart.notifyDataSetChanged()
+        chart.setVisibleXRangeMaximum(30f * 1000)
+        chart.moveViewToX(timestamp.toFloat())
     }
 
     private fun startCamera() {
@@ -107,5 +141,20 @@ class CaptureActivity : ComponentActivity() {
                 Log.e(TAG, "This should never be reached", e)
             }
         }, ContextCompat.getMainExecutor(this))
+    }
+
+    fun onStartCalibration(view: View) {
+        val fragmentTransaction = supportFragmentManager.beginTransaction()
+        measureFragment = MeasureFragment()
+        fragmentTransaction.add(R.id.fragmentContainerView, measureFragment!!)
+        fragmentTransaction.addToBackStack(null)
+        fragmentTransaction.commit()
+
+        captureCanvasView.onUpdateDistance.add(measureFragment!!::updateDistanceList)
+    }
+
+    fun onEndCalibration(view: View) {
+        supportFragmentManager.popBackStack()
+        captureCanvasView.onUpdateDistance.remove(measureFragment!!::updateDistanceList)
     }
 }
