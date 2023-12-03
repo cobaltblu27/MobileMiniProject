@@ -7,6 +7,10 @@
         android:required="false" />
 
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
 
     <application
         android:allowBackup="true"
@@ -29,7 +33,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".activity.capture.CaptureActivity" android:screenOrientation="landscape" />
-        <activity android:name=".activity.measure.MeasureActivity" android:screenOrientation="landscape" />
+        <activity android:name=".activity.stats.StatsActivity" android:screenOrientation="landscape" />
     </application>
 
 </manifest>

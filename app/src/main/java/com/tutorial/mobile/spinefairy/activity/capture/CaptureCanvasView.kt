@@ -14,6 +14,7 @@ import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 import com.tutorial.mobile.spinefairy.R
 import com.tutorial.mobile.spinefairy.model.PoseMarkerResultBundle
+import com.tutorial.mobile.spinefairy.model.PoseMeasurement
 import com.tutorial.mobile.spinefairy.utils.div
 import com.tutorial.mobile.spinefairy.utils.l2
 import com.tutorial.mobile.spinefairy.utils.minus
@@ -41,11 +42,6 @@ import kotlin.math.pow
 class CaptureCanvasView(context: Context?, attrs: AttributeSet?) :
     View(context, attrs) {
 
-    data class Measurement(
-        val neckToNose: Float,
-        val shouldersDist: Float,
-    )
-
     private var results: List<PoseMarkerResultBundle> = emptyList()
 
     private var defaultLineColor = ContextCompat.getColor(context!!, R.color.purple_200)
@@ -58,7 +54,7 @@ class CaptureCanvasView(context: Context?, attrs: AttributeSet?) :
     private var imageHeight = 1
     private var scaleFactor = BASE_SCALE_FACTOR
 
-    val onUpdateDistance: MutableList<(m: Measurement) -> Unit> = mutableListOf()
+    val onUpdateDistance: MutableList<(m: PoseMeasurement) -> Unit> = mutableListOf()
 
     companion object {
         private const val TAG = "capture_canvas_view"
@@ -139,7 +135,7 @@ class CaptureCanvasView(context: Context?, attrs: AttributeSet?) :
 
             val noseHorizontalDistance = (neck + neckVertical - nose).l2()
             val shouldersDist = calculateShouldersDist(landmarks)
-            val measurement = Measurement(noseHorizontalDistance, shouldersDist)
+            val measurement = PoseMeasurement(noseHorizontalDistance, shouldersDist)
             onUpdateDistance.forEach { it(measurement) }
 
             val text = neckVerticalVector.let { landmark ->

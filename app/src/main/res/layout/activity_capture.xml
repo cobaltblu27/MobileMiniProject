@@ -18,7 +18,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/fragmentContainerView"
         android:layout_width="379dp"
-        android:layout_height="408dp"
+        android:layout_height="390dp"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -28,8 +28,8 @@
 
         <com.github.mikephil.charting.charts.LineChart
             android:id="@+id/chart"
-            android:layout_width="306dp"
-            android:layout_height="82dp"
+            android:layout_width="266dp"
+            android:layout_height="60dp"
             android:layout_marginTop="4dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -39,6 +39,7 @@
             android:id="@+id/captureInfoTextView"
             android:layout_width="237dp"
             android:layout_height="39dp"
+            android:layout_marginTop="16dp"
             android:gravity="center"
             android:text="debug"
             android:textColor="@color/white"
@@ -48,8 +49,8 @@
 
         <com.tutorial.mobile.spinefairy.activity.capture.CaptureCanvasView
             android:id="@+id/captureCanvasView"
-            android:layout_width="322dp"
-            android:layout_height="282dp"
+            android:layout_width="326dp"
+            android:layout_height="273dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
@@ -60,8 +61,8 @@
             android:layout_height="40dp"
             android:onClick="onOpenSettings"
             android:src="@android:drawable/ic_menu_preferences"
-            app:layout_constraintBottom_toTopOf="@+id/imageButton"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
             android:id="@+id/imageButton"
@@ -69,6 +70,16 @@
             android:layout_height="40dp"
             android:onClick="onStartCalibration"
             android:src="@android:drawable/ic_menu_compass"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/imageButton2" />
+
+        <Button
+            android:id="@+id/button"
+            android:layout_width="98dp"
+            android:layout_height="48dp"
+            android:background="#FFA500"
+            android:onClick="toStats"
+            android:text="End session"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>

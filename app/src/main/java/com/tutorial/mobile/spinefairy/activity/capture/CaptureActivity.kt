@@ -2,14 +2,12 @@ package com.tutorial.mobile.spinefairy.activity.capture
 
 import android.Manifest
 import android.app.AlertDialog
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.text.InputType
 import android.util.Log
 import android.view.View
-import android.widget.EditText
 import android.widget.ImageButton
-import android.widget.RadioButton
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.camera.core.AspectRatio
@@ -29,12 +27,20 @@ import com.github.mikephil.charting.data.LineDataSet
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 import com.tutorial.mobile.spinefairy.R
 import com.tutorial.mobile.spinefairy.activity.common.CaptureMediaPipeManager
-import com.tutorial.mobile.spinefairy.activity.measure.MeasureFragment
+import com.tutorial.mobile.spinefairy.activity.stats.StatsActivity
+import com.tutorial.mobile.spinefairy.filePath
 import com.tutorial.mobile.spinefairy.model.PoseMarkerResultBundle
+import com.tutorial.mobile.spinefairy.model.PoseMeasurement
+import com.tutorial.mobile.spinefairy.utils.saveCsv
+import com.tutorial.mobile.spinefairy.utils.toCsv
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -63,7 +69,7 @@ class CaptureActivity : FragmentActivity() {
     private var measuredShoulderLength: Float = 0.5f
     private var measuredNoseDistance: Float = 0.6f
     private var warnSensitivity: Float = 0.2f
-    private val measurementList: MutableList<CaptureCanvasView.Measurement> = mutableListOf()
+    private val measurementList: MutableList<PoseMeasurement> = mutableListOf()
 
     companion object {
         const val CAMERA_PERMISSION_CODE = 936
@@ -189,14 +195,12 @@ class CaptureActivity : FragmentActivity() {
 //        }
     }
 
-    private fun checkPosture(measurement: CaptureCanvasView.Measurement) {
+    private fun checkPosture(measurement: PoseMeasurement) {
         measurementList.add(measurement)
-        if (measurementList.size > MEASUREMENT_SMOOTHING_SAMPLES) {
-            measurementList.removeAt(0)
-        }
-        val shoulderLength = measurementList.map { it.shouldersDist }.sum() /
+        val measurementSubset = measurementList.takeLast(MEASUREMENT_SMOOTHING_SAMPLES)
+        val shoulderLength = measurementSubset.map { it.shouldersDist }.sum() /
                 MEASUREMENT_SMOOTHING_SAMPLES
-        val neckDistance = measurementList.map { it.neckToNose }.sum() /
+        val neckDistance = measurementSubset.map { it.neckToNose }.sum() /
                 MEASUREMENT_SMOOTHING_SAMPLES
         val bodyRelativeDistance = shoulderLength / measuredShoulderLength
         Log.i(TAG, "rel: ${bodyRelativeDistance}")
@@ -229,5 +233,20 @@ class CaptureActivity : FragmentActivity() {
         Log.i(TAG, "Nose: $measuredNoseDistance, Shoulder: $measuredShoulderLength")
         supportFragmentManager.popBackStack()
         captureCanvasView.onUpdateDistance.remove(measureFragment!!::updateDistanceList)
+    }
+
+    fun toStats(view: View) {
+        val intent = Intent(this, StatsActivity::class.java)
+        saveMeasurements()
+        intent.putExtra(StatsActivity.EXTRA, measurementList.toCsv())
+        startActivity(intent)
+    }
+
+    private fun saveMeasurements() {
+        val currentDateTime = Date()
+        val dateFormat = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.getDefault())
+        val dateStr = dateFormat.format(currentDateTime)
+        val fileName = "posture_stat_$dateStr.csv"
+        saveCsv(measurementList.toCsv(), fileName)
     }
 }

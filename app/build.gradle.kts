@@ -56,6 +56,8 @@ project.extra.set("assetDir", project.projectDir.resolve("src/main/assets").toSt
 dependencies {
     val cameraXVersion = "1.2.3"
 
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+    implementation("com.anggrayudi:storage:1.5.5")
     implementation("org.jetbrains.kotlinx:multik-core:0.2.2")
     implementation("org.jetbrains.kotlinx:multik-core-jvm:0.2.2")
     implementation("com.google.mediapipe:tasks-vision:0.10.0")

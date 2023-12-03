@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import com.tutorial.mobile.spinefairy.R
 import com.tutorial.mobile.spinefairy.activity.capture.CaptureActivity
 import com.tutorial.mobile.spinefairy.activity.common.CaptureMediaPipeManager
+import com.tutorial.mobile.spinefairy.activity.stats.StatsActivity
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.ExecutorService
@@ -20,6 +21,11 @@ class MainActivity : ComponentActivity() {
 
     fun toStartCapture(view: View) {
         val intent = Intent(this, CaptureActivity::class.java)
+        startActivity(intent)
+    }
+
+    fun toStats(view: View) {
+        val intent = Intent(this, StatsActivity::class.java)
         startActivity(intent)
     }
 }
