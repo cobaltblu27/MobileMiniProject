@@ -17,7 +17,7 @@ inline fun <reified T: CsvData<T>> List<T>.toCsv(): String {
 }
 
 fun measurementsFromCsv(data: String): List<PoseMeasurement> {
-    val rows = data.lines().drop(0)
+    val rows = data.lines().drop(1)
     return rows.map {
         PoseMeasurement.fromCsv(it)
     }

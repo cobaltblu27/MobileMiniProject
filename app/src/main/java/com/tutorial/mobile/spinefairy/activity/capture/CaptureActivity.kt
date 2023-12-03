@@ -28,7 +28,6 @@ import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 import com.tutorial.mobile.spinefairy.R
 import com.tutorial.mobile.spinefairy.activity.common.CaptureMediaPipeManager
 import com.tutorial.mobile.spinefairy.activity.stats.StatsActivity
-import com.tutorial.mobile.spinefairy.filePath
 import com.tutorial.mobile.spinefairy.model.PoseMarkerResultBundle
 import com.tutorial.mobile.spinefairy.model.PoseMeasurement
 import com.tutorial.mobile.spinefairy.utils.saveCsv
@@ -37,7 +36,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -69,6 +67,8 @@ class CaptureActivity : FragmentActivity() {
     private var measuredShoulderLength: Float = 0.5f
     private var measuredNoseDistance: Float = 0.6f
     private var warnSensitivity: Float = 0.2f
+    private val distanceThreshold: Float
+        get() = measuredNoseDistance * (1 + warnSensitivity)
     private val measurementList: MutableList<PoseMeasurement> = mutableListOf()
 
     companion object {
@@ -204,7 +204,7 @@ class CaptureActivity : FragmentActivity() {
                 MEASUREMENT_SMOOTHING_SAMPLES
         val bodyRelativeDistance = shoulderLength / measuredShoulderLength
         Log.i(TAG, "rel: ${bodyRelativeDistance}")
-        if (neckDistance > measuredNoseDistance * (1 + warnSensitivity)) {
+        if (neckDistance > distanceThreshold) {
             guideText.text = "Sit straight!"
         } else {
             guideText.text = ""
@@ -238,7 +238,8 @@ class CaptureActivity : FragmentActivity() {
     fun toStats(view: View) {
         val intent = Intent(this, StatsActivity::class.java)
         saveMeasurements()
-        intent.putExtra(StatsActivity.EXTRA, measurementList.toCsv())
+        intent.putExtra(StatsActivity.STAT_EXTRA, measurementList.toCsv())
+        intent.putExtra(StatsActivity.THRESHOLD_EXTRA, distanceThreshold)
         startActivity(intent)
     }
 
