@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
+    android:background="#2B3A40"
     android:clickable="true">
 
     <ProgressBar
@@ -25,6 +25,8 @@
         android:gravity="center"
         android:text="Sit straight.."
         android:textSize="20sp"
+        android:textColor="@color/white"
+        android:textFontWeight="800"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

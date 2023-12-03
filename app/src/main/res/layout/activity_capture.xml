@@ -2,76 +2,75 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:background="#2B3A40"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <androidx.camera.view.PreviewView
         android:id="@+id/previewView"
-        android:layout_width="378dp"
-        android:layout_height="369dp"
-        android:layout_marginTop="12dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.039"
+        android:layout_width="458dp"
+        android:layout_height="414dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
     </androidx.camera.view.PreviewView>
 
-    <com.github.mikephil.charting.charts.LineChart
-        android:id="@+id/chart"
-        android:layout_width="368dp"
-        android:layout_height="87dp"
-        android:layout_marginBottom="4dp"
-        app:layout_constraintBottom_toTopOf="@+id/captureCanvasView"
-        app:layout_constraintEnd_toEndOf="@+id/captureCanvasView"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="@+id/captureCanvasView" />
-
-    <TextView
-        android:id="@+id/captureInfoTextView"
-        android:layout_width="335dp"
-        android:layout_height="21dp"
-        android:gravity="center"
-        android:text="debug"
-        app:layout_constraintEnd_toEndOf="@+id/captureCanvasView"
-        app:layout_constraintStart_toStartOf="@+id/captureCanvasView"
-        app:layout_constraintTop_toTopOf="@+id/captureCanvasView" />
-
-    <com.tutorial.mobile.spinefairy.activity.capture.CaptureCanvasView
-        android:id="@+id/captureCanvasView"
-        android:layout_width="369dp"
-        android:layout_height="282dp"
-        android:layout_marginEnd="16dp"
-        app:layout_constraintBottom_toBottomOf="@+id/previewView"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <ImageButton
-        android:id="@+id/imageButton"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:src="@android:drawable/ic_menu_compass"
-        android:onClick="onStartCalibration"
-        app:layout_constraintBottom_toBottomOf="@+id/captureCanvasView"
-        app:layout_constraintEnd_toEndOf="@+id/captureCanvasView" />
-
-    <ImageButton
-        android:id="@+id/imageButton2"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:src="@android:drawable/ic_menu_preferences"
-        android:onClick="onOpenSettings"
-        app:layout_constraintBottom_toTopOf="@+id/imageButton"
-        app:layout_constraintEnd_toEndOf="@+id/fragmentContainerView" />
-
-    <FrameLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/fragmentContainerView"
-        android:layout_width="407dp"
-        android:layout_height="411dp"
-        android:layout_marginTop="246dp"
-        android:layout_marginEnd="16dp"
+        android:layout_width="379dp"
+        android:layout_height="408dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/chart"
-        app:layout_constraintVertical_bias="1.0"></FrameLayout>
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/previewView">
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/chart"
+            android:layout_width="306dp"
+            android:layout_height="82dp"
+            android:layout_marginTop="4dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/captureInfoTextView"
+            android:layout_width="237dp"
+            android:layout_height="39dp"
+            android:gravity="center"
+            android:text="debug"
+            android:textColor="@color/white"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/chart" />
+
+        <com.tutorial.mobile.spinefairy.activity.capture.CaptureCanvasView
+            android:id="@+id/captureCanvasView"
+            android:layout_width="322dp"
+            android:layout_height="282dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <ImageButton
+            android:id="@+id/imageButton2"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:onClick="onOpenSettings"
+            android:src="@android:drawable/ic_menu_preferences"
+            app:layout_constraintBottom_toTopOf="@+id/imageButton"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <ImageButton
+            android:id="@+id/imageButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:onClick="onStartCalibration"
+            android:src="@android:drawable/ic_menu_compass"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

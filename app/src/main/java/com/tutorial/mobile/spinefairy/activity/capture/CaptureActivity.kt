@@ -62,7 +62,7 @@ class CaptureActivity : FragmentActivity() {
 
     private var measuredShoulderLength: Float = 0.5f
     private var measuredNoseDistance: Float = 0.6f
-    private var warnSensitivity: Float = 0.1f
+    private var warnSensitivity: Float = 0.2f
     private val measurementList: MutableList<CaptureCanvasView.Measurement> = mutableListOf()
 
     companion object {
@@ -113,7 +113,7 @@ class CaptureActivity : FragmentActivity() {
     private fun updateChart(distance: Float) {
         val data = chart.data
         data.getDataSetByIndex(0) ?: LineDataSet(null, "").apply {
-            color = Color.rgb(93, 18, 210)
+            color = Color.rgb(64, 237, 218)
             setDrawCircles(false)
             data.addDataSet(this)
         }
@@ -174,7 +174,7 @@ class CaptureActivity : FragmentActivity() {
         builder.setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }
         builder.setPositiveButton("Submit") { dialog, _ ->
             Log.e(TAG, "${seekbar.progress}") // TODO:
-            warnSensitivity = 0.2f * seekbar.progress
+            warnSensitivity = 0.04f * seekbar.progress
             dialog.cancel()
         }
         builder.show()
@@ -199,8 +199,8 @@ class CaptureActivity : FragmentActivity() {
         val neckDistance = measurementList.map { it.neckToNose }.sum() /
                 MEASUREMENT_SMOOTHING_SAMPLES
         val bodyRelativeDistance = shoulderLength / measuredShoulderLength
+        Log.i(TAG, "rel: ${bodyRelativeDistance}")
         if (neckDistance > measuredNoseDistance * (1 + warnSensitivity)) {
-            Log.i(TAG, "warn")
             guideText.text = "Sit straight!"
         } else {
             guideText.text = ""
