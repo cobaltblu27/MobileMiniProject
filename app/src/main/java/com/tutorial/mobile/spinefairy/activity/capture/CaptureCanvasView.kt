@@ -58,11 +58,6 @@ class CaptureCanvasView(context: Context?, attrs: AttributeSet?) :
     private var imageHeight = 1
     private var scaleFactor = BASE_SCALE_FACTOR
 
-    private var neckHorizontalOffset: Float? = null
-
-    lateinit var debugText: TextView
-    lateinit var chart: LineChart
-
     val onUpdateDistance: MutableList<(m: Measurement) -> Unit> = mutableListOf()
 
     companion object {
@@ -150,8 +145,7 @@ class CaptureCanvasView(context: Context?, attrs: AttributeSet?) :
             val text = neckVerticalVector.let { landmark ->
                 "x: ${landmark[0]}, y: ${landmark[1]}, z: ${landmark[2]}"
             }
-            debugText.text = text
-//            Log.i(TAG, text)
+            Log.i(TAG, text)
         }
     }
 

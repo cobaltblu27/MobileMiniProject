@@ -54,6 +54,15 @@
         app:layout_constraintBottom_toBottomOf="@+id/captureCanvasView"
         app:layout_constraintEnd_toEndOf="@+id/captureCanvasView" />
 
+    <ImageButton
+        android:id="@+id/imageButton2"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@android:drawable/ic_menu_preferences"
+        android:onClick="onOpenSettings"
+        app:layout_constraintBottom_toTopOf="@+id/imageButton"
+        app:layout_constraintEnd_toEndOf="@+id/fragmentContainerView" />
+
     <FrameLayout
         android:id="@+id/fragmentContainerView"
         android:layout_width="407dp"
@@ -63,6 +72,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/chart"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintVertical_bias="1.0"></FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

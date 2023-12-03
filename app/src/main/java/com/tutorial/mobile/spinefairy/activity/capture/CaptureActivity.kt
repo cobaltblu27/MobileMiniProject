@@ -1,11 +1,17 @@
 package com.tutorial.mobile.spinefairy.activity.capture
 
 import android.Manifest
+import android.app.AlertDialog
 import android.graphics.Color
 import android.os.Bundle
+import android.text.InputType
 import android.util.Log
 import android.view.View
+import android.widget.EditText
 import android.widget.ImageButton
+import android.widget.RadioButton
+import android.widget.SeekBar
+import android.widget.TextView
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
@@ -25,6 +31,10 @@ import com.tutorial.mobile.spinefairy.R
 import com.tutorial.mobile.spinefairy.activity.common.CaptureMediaPipeManager
 import com.tutorial.mobile.spinefairy.activity.measure.MeasureFragment
 import com.tutorial.mobile.spinefairy.model.PoseMarkerResultBundle
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -40,6 +50,7 @@ class CaptureActivity : FragmentActivity() {
     private lateinit var cameraPreview: PreviewView
     private lateinit var captureCanvasView: CaptureCanvasView
     private lateinit var chart: LineChart
+    private lateinit var guideText: TextView
 
     private var measureFragment: MeasureFragment? = null
 
@@ -49,11 +60,18 @@ class CaptureActivity : FragmentActivity() {
     private val resultList: MutableList<PoseMarkerResultBundle> = mutableListOf()
     private var captureStartTimestamp = System.currentTimeMillis()
 
+    private var measuredShoulderLength: Float = 0.5f
+    private var measuredNoseDistance: Float = 0.6f
+    private var warnSensitivity: Float = 0.1f
+    private val measurementList: MutableList<CaptureCanvasView.Measurement> = mutableListOf()
+
     companion object {
         const val CAMERA_PERMISSION_CODE = 936
         const val TAG = "activity-object-classification"
 
         const val RESULT_LIST_SIZE = 15
+
+        const val MEASUREMENT_SMOOTHING_SAMPLES = 8
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,9 +103,10 @@ class CaptureActivity : FragmentActivity() {
             }
         }
 
-        captureCanvasView.debugText = findViewById(R.id.captureInfoTextView)
+        guideText = findViewById(R.id.captureInfoTextView)
         captureCanvasView.onUpdateDistance.add {
             updateChart(it.neckToNose)
+            checkPosture(it)
         }
     }
 
@@ -143,6 +162,51 @@ class CaptureActivity : FragmentActivity() {
         }, ContextCompat.getMainExecutor(this))
     }
 
+    fun onOpenSettings(view: View) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Set warning sensitivity")
+        val seekbar = SeekBar(this).apply {
+            max = 10
+            min = 1
+            progress = 5
+        }
+        builder.setView(seekbar)
+        builder.setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }
+        builder.setPositiveButton("Submit") { dialog, _ ->
+            Log.e(TAG, "${seekbar.progress}") // TODO:
+            warnSensitivity = 0.2f * seekbar.progress
+            dialog.cancel()
+        }
+        builder.show()
+
+//        val input = EditText(this)
+//        input.inputType = InputType.TYPE_CLASS_TEXT
+//        builder.setView(input)
+//        builder.setPositiveButton("OK") { _, _ ->
+//            RadioButton(this)
+//                .apply { text = input.text.toString() }
+//                .let { labelsRadioGroup.addView(it) }
+//        }
+    }
+
+    private fun checkPosture(measurement: CaptureCanvasView.Measurement) {
+        measurementList.add(measurement)
+        if (measurementList.size > MEASUREMENT_SMOOTHING_SAMPLES) {
+            measurementList.removeAt(0)
+        }
+        val shoulderLength = measurementList.map { it.shouldersDist }.sum() /
+                MEASUREMENT_SMOOTHING_SAMPLES
+        val neckDistance = measurementList.map { it.neckToNose }.sum() /
+                MEASUREMENT_SMOOTHING_SAMPLES
+        val bodyRelativeDistance = shoulderLength / measuredShoulderLength
+        if (neckDistance > measuredNoseDistance * (1 + warnSensitivity)) {
+            Log.i(TAG, "warn")
+            guideText.text = "Sit straight!"
+        } else {
+            guideText.text = ""
+        }
+    }
+
     fun onStartCalibration(view: View) {
         val fragmentTransaction = supportFragmentManager.beginTransaction()
         measureFragment = MeasureFragment()
@@ -151,9 +215,18 @@ class CaptureActivity : FragmentActivity() {
         fragmentTransaction.commit()
 
         captureCanvasView.onUpdateDistance.add(measureFragment!!::updateDistanceList)
+
+        CoroutineScope(Dispatchers.Main).launch {
+            delay(10000)
+            endCalibration()
+        }
     }
 
-    fun onEndCalibration(view: View) {
+    private fun endCalibration() {
+        measuredNoseDistance = measureFragment?.averageNoseDist ?: measuredNoseDistance
+        measuredShoulderLength = measureFragment?.averageShoulderLength
+            ?: measuredShoulderLength
+        Log.i(TAG, "Nose: $measuredNoseDistance, Shoulder: $measuredShoulderLength")
         supportFragmentManager.popBackStack()
         captureCanvasView.onUpdateDistance.remove(measureFragment!!::updateDistanceList)
     }
