@@ -24,18 +24,24 @@ import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
+import com.google.mediapipe.tasks.components.containers.NormalizedLandmark
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
 import com.tutorial.mobile.spinefairy.R
 import com.tutorial.mobile.spinefairy.activity.common.CaptureMediaPipeManager
 import com.tutorial.mobile.spinefairy.activity.stats.StatsActivity
+import com.tutorial.mobile.spinefairy.model.PoseLog
 import com.tutorial.mobile.spinefairy.model.PoseMarkerResultBundle
 import com.tutorial.mobile.spinefairy.model.PoseMeasurement
+import com.tutorial.mobile.spinefairy.utils.loadModelFile
+import com.tutorial.mobile.spinefairy.utils.logModelInfo
 import com.tutorial.mobile.spinefairy.utils.saveCsv
 import com.tutorial.mobile.spinefairy.utils.toCsv
+import com.tutorial.mobile.spinefairy.utils.toMk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.tensorflow.lite.Interpreter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -61,6 +67,8 @@ class CaptureActivity : FragmentActivity() {
     private lateinit var backgroundExecutor: ExecutorService
     private lateinit var captureMediaPipeManager: CaptureMediaPipeManager
 
+    private lateinit var tfInterpreter: Interpreter
+
     private val resultList: MutableList<PoseMarkerResultBundle> = mutableListOf()
     private var captureStartTimestamp = System.currentTimeMillis()
 
@@ -69,7 +77,13 @@ class CaptureActivity : FragmentActivity() {
     private var warnSensitivity: Float = 0.2f
     private val distanceThreshold: Float
         get() = measuredNoseDistance * (1 + warnSensitivity)
+
+    private var dnnInput: Array<FloatArray> = Array(1) {
+        FloatArray(DNN_INPUT_SIZE)
+    }
     private val measurementList: MutableList<PoseMeasurement> = mutableListOf()
+    private var logList: MutableList<PoseLog> = mutableListOf()
+    private var badPoseDetected = false
 
     companion object {
         const val CAMERA_PERMISSION_CODE = 936
@@ -78,6 +92,8 @@ class CaptureActivity : FragmentActivity() {
         const val RESULT_LIST_SIZE = 15
 
         const val MEASUREMENT_SMOOTHING_SAMPLES = 8
+
+        const val DNN_INPUT_SIZE = 99
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -113,6 +129,19 @@ class CaptureActivity : FragmentActivity() {
         captureCanvasView.onUpdateDistance.add {
             updateChart(it.neckToNose)
             checkPosture(it)
+        }
+        captureCanvasView.onUpdateLandmark.add {
+            logPose(it)
+            updateRecentLandmark(it)
+            inference()
+        }
+
+        try {
+            val tfModel = loadModelFile(this, "quantized_model.tflite")
+            tfInterpreter = Interpreter(tfModel, Interpreter.Options())
+            logModelInfo(TAG, tfInterpreter)
+        } catch (e: Exception) {
+            Log.e(TAG, "tflite model failed to load", e)
         }
     }
 
@@ -195,6 +224,26 @@ class CaptureActivity : FragmentActivity() {
 //        }
     }
 
+    private fun logPose(list: List<NormalizedLandmark>) {
+        val landmarks = list.map {
+            it.toMk()
+        }
+        logList.add(
+            PoseLog(
+                landmarks,
+                badPoseDetected
+            )
+        )
+    }
+
+    private fun updateRecentLandmark(list: List<NormalizedLandmark>) {
+        list.forEachIndexed { i, coordinate ->
+            dnnInput[0][3 * i] = coordinate.x()
+            dnnInput[0][3 * i + 1] = coordinate.y()
+            dnnInput[0][3 * i + 2] = coordinate.z()
+        }
+    }
+
     private fun checkPosture(measurement: PoseMeasurement) {
         measurementList.add(measurement)
         val measurementSubset = measurementList.takeLast(MEASUREMENT_SMOOTHING_SAMPLES)
@@ -203,12 +252,28 @@ class CaptureActivity : FragmentActivity() {
         val neckDistance = measurementSubset.map { it.neckToNose }.sum() /
                 MEASUREMENT_SMOOTHING_SAMPLES
         val bodyRelativeDistance = shoulderLength / measuredShoulderLength
-        Log.i(TAG, "rel: ${bodyRelativeDistance}")
+//        Log.i(TAG, "rel: ${bodyRelativeDistance}")
         if (neckDistance > distanceThreshold) {
             guideText.text = "Sit straight!"
+            badPoseDetected = true
         } else {
             guideText.text = ""
+            badPoseDetected = false
         }
+    }
+
+
+    private fun inference() {
+        val dnnOutput = Array(1) { FloatArray(1) }
+
+        try {
+            tfInterpreter.run(dnnInput, dnnOutput)
+        } catch (e: Exception) {
+            e.stackTrace
+        }
+
+        val output = dnnOutput[0][0]
+        Log.i(TAG, "inference result: ${output}")
     }
 
     fun onStartCalibration(view: View) {
@@ -233,11 +298,15 @@ class CaptureActivity : FragmentActivity() {
         Log.i(TAG, "Nose: $measuredNoseDistance, Shoulder: $measuredShoulderLength")
         supportFragmentManager.popBackStack()
         captureCanvasView.onUpdateDistance.remove(measureFragment!!::updateDistanceList)
+
+        // remove uncalibrated data
+        logList = mutableListOf()
     }
 
     fun toStats(view: View) {
         val intent = Intent(this, StatsActivity::class.java)
         saveMeasurements()
+        saveLogs()
         intent.putExtra(StatsActivity.STAT_EXTRA, measurementList.toCsv())
         intent.putExtra(StatsActivity.THRESHOLD_EXTRA, distanceThreshold)
         startActivity(intent)
@@ -249,5 +318,13 @@ class CaptureActivity : FragmentActivity() {
         val dateStr = dateFormat.format(currentDateTime)
         val fileName = "posture_stat_$dateStr.csv"
         saveCsv(measurementList.toCsv(), fileName)
+    }
+
+    private fun saveLogs() {
+        val currentDateTime = Date()
+        val dateFormat = SimpleDateFormat("yyyy_MM_dd_HH_mm_ss", Locale.getDefault())
+        val dateStr = dateFormat.format(currentDateTime)
+        val fileName = "logs_$dateStr.csv"
+        saveCsv(logList.toCsv(), fileName)
     }
 }

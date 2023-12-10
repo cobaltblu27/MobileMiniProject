@@ -56,6 +56,12 @@ project.extra.set("assetDir", project.projectDir.resolve("src/main/assets").toSt
 dependencies {
     val cameraXVersion = "1.2.3"
 
+    val tensorflowVersion = "2.14.0"
+    val tensorflowSupportVersion = "0.4.4"
+    implementation("org.tensorflow:tensorflow-lite:$tensorflowVersion")
+    implementation("org.tensorflow:tensorflow-lite-gpu:$tensorflowVersion")
+    implementation("org.tensorflow:tensorflow-lite-support:$tensorflowSupportVersion")
+    implementation("org.tensorflow:tensorflow-lite-metadata:$tensorflowSupportVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
     implementation("com.anggrayudi:storage:1.5.5")
     implementation("org.jetbrains.kotlinx:multik-core:0.2.2")

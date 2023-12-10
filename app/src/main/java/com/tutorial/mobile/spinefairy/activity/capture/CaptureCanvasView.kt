@@ -55,6 +55,7 @@ class CaptureCanvasView(context: Context?, attrs: AttributeSet?) :
     private var scaleFactor = BASE_SCALE_FACTOR
 
     val onUpdateDistance: MutableList<(m: PoseMeasurement) -> Unit> = mutableListOf()
+    val onUpdateLandmark: MutableList<(l: List<NormalizedLandmark>) -> Unit> = mutableListOf()
 
     companion object {
         private const val TAG = "capture_canvas_view"
@@ -137,6 +138,7 @@ class CaptureCanvasView(context: Context?, attrs: AttributeSet?) :
             val shouldersDist = calculateShouldersDist(landmarks)
             val measurement = PoseMeasurement(noseHorizontalDistance, shouldersDist)
             onUpdateDistance.forEach { it(measurement) }
+            onUpdateLandmark.forEach { it(landmarks) }
 
             val text = neckVerticalVector.let { landmark ->
                 "x: ${landmark[0]}, y: ${landmark[1]}, z: ${landmark[2]}"
