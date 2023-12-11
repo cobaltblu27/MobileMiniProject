@@ -17,6 +17,7 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
@@ -61,6 +62,7 @@ class CaptureActivity : FragmentActivity() {
     private lateinit var captureCanvasView: CaptureCanvasView
     private lateinit var chart: LineChart
     private lateinit var guideText: TextView
+    private lateinit var layout: ConstraintLayout
 
     private var measureFragment: MeasureFragment? = null
 
@@ -94,6 +96,9 @@ class CaptureActivity : FragmentActivity() {
         const val MEASUREMENT_SMOOTHING_SAMPLES = 8
 
         const val DNN_INPUT_SIZE = 99
+
+        val BACKGROUND_COLOR = Color.parseColor("#2B3A40")
+        val WARN_BACKGROUND_COLOR = Color.parseColor("#FFA732")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -111,6 +116,7 @@ class CaptureActivity : FragmentActivity() {
         captureCanvasView = findViewById(R.id.captureCanvasView)
         backgroundExecutor = Executors.newSingleThreadExecutor()
         chart = findViewById(R.id.chart)
+        layout = findViewById(R.id.captureConstraintLayout)
 
         chart.data = LineData()
 
@@ -257,9 +263,11 @@ class CaptureActivity : FragmentActivity() {
             inference()
 //            guideText.text = "Sit straight!"
             badPoseDetected = true
+            layout.setBackgroundColor(WARN_BACKGROUND_COLOR)
         } else {
 //            guideText.text = ""
             badPoseDetected = false
+            layout.setBackgroundColor(BACKGROUND_COLOR)
         }
     }
 
