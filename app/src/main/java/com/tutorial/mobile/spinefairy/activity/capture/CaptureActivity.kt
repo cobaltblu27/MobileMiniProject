@@ -133,11 +133,11 @@ class CaptureActivity : FragmentActivity() {
         captureCanvasView.onUpdateLandmark.add {
             logPose(it)
             updateRecentLandmark(it)
-            inference()
+//            inference()
         }
 
         try {
-            val tfModel = loadModelFile(this, "quantized_model.tflite")
+            val tfModel = loadModelFile(this, "quantized_model_2.tflite")
             tfInterpreter = Interpreter(tfModel, Interpreter.Options())
             logModelInfo(TAG, tfInterpreter)
         } catch (e: Exception) {
@@ -254,10 +254,11 @@ class CaptureActivity : FragmentActivity() {
         val bodyRelativeDistance = shoulderLength / measuredShoulderLength
 //        Log.i(TAG, "rel: ${bodyRelativeDistance}")
         if (neckDistance > distanceThreshold) {
-            guideText.text = "Sit straight!"
+            inference()
+//            guideText.text = "Sit straight!"
             badPoseDetected = true
         } else {
-            guideText.text = ""
+//            guideText.text = ""
             badPoseDetected = false
         }
     }
@@ -273,6 +274,11 @@ class CaptureActivity : FragmentActivity() {
         }
 
         val output = dnnOutput[0][0]
+        if (output > 0.5) {
+            guideText.text = "Sit straight!"
+        } else {
+            guideText.text = ""
+        }
         Log.i(TAG, "inference result: ${output}")
     }
 
